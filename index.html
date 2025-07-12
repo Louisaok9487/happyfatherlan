@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>超級老爸家務挑戰 (無音效版)</title>
+    <title>超級老爸家務挑戰 (音效升級版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <!-- 引入 Tone.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
     <style>
         /* --- 基本樣式 --- */
         :root {
@@ -258,6 +261,40 @@
         const endMessage = document.getElementById('end-message');
         const fireworksContainer = document.getElementById('fireworks-container');
 
+        // --- 音效設定 (Tone.js) ---
+        let soundsReady = false;
+        const synth = new Tone.Synth().toDestination();
+        synth.volume.value = 0; // 調高音量
+
+        const polySynth = new Tone.PolySynth(Tone.Synth).toDestination();
+        polySynth.volume.value = 0; // 調高音量 (原為 -6)
+
+        const clickSound = new Tone.MembraneSynth({
+            pitchDecay: 0.01,
+            octaves: 6,
+            oscillator: { type: "sine" },
+            envelope: { attack: 0.001, decay: 0.2, sustain: 0.01, release: 0.2 }
+        }).toDestination();
+        clickSound.volume.value = 0; // 調高音量 (原為 -6)
+
+        // 勝利音效
+        const victoryMelody = [
+            ['C5', '8n'], ['E5', '8n'], ['G5', '8n'], ['C6', '4n'],
+            ['G5', '8n'], ['C6', '4n']
+        ];
+        
+        // 結束音效
+        const gameOverSound = [['C4', '4n'], ['G3', '4n']];
+
+        // 確保音效在使用者互動後啟動
+        const initAudio = async () => {
+            if (!soundsReady) {
+                await Tone.start();
+                console.log('音訊已準備就緒');
+                soundsReady = true;
+            }
+        };
+
         // --- 遊戲設定 ---
         const GAME_TIME = 20;
         const chores = [
@@ -273,11 +310,21 @@
         // --- 事件監聽 ---
         startButton.addEventListener('click', startGame);
         restartButton.addEventListener('click', startGame);
+        // 為了讓音效能在手機瀏覽器上正常播放，在第一次點擊時初始化音訊
+        gameContainer.addEventListener('click', initAudio, { once: true });
+
 
         /**
          * 開始遊戲
          */
         function startGame() {
+            initAudio(); // 確保音訊已啟動
+            
+            // 播放開始音效
+            if (soundsReady) {
+                synth.triggerAttackRelease("C5", "8n", Tone.now());
+            }
+
             // 重設遊戲狀態
             score = 0;
             timeLeft = GAME_TIME;
@@ -305,6 +352,10 @@
         function updateTimer() {
             timeLeft--;
             timerDisplay.textContent = timeLeft;
+            if (timeLeft <= 5 && timeLeft > 0 && soundsReady) {
+                // 倒數音效
+                synth.triggerAttackRelease("G5", "16n", Tone.now());
+            }
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
             }
@@ -315,7 +366,6 @@
          */
         function endGame() {
             clearInterval(gameInterval);
-            // 確保計時器也被清除
             if (timerInterval) {
                 clearInterval(timerInterval);
             }
@@ -324,10 +374,19 @@
             
             if (score > 100) {
                 endMessage.innerHTML = "太神啦！您是地表最強老爸！<br>這個分數，二伯連車尾燈都看不到！";
+                if (soundsReady) new Tone.Sequence((time, note) => {
+                    polySynth.triggerAttackRelease(note, "8n", time);
+                }, victoryMelody, "8n").start(0).stop('1m');
             } else if (score > 50) {
                 endMessage.innerHTML = "爸爸辛苦了！您是我們家的超級英雄！<br>比二伯強太多了！";
+                 if (soundsReady) new Tone.Sequence((time, note) => {
+                    polySynth.triggerAttackRelease(note, "4n", time);
+                }, gameOverSound, "4n").start(0).stop('1m');
             } else {
                 endMessage.innerHTML = "感謝爸爸的付出！<br>每一分都是愛的證明！";
+                 if (soundsReady) new Tone.Sequence((time, note) => {
+                    polySynth.triggerAttackRelease(note, "4n", time);
+                }, gameOverSound, "4n").start(0).stop('1m');
             }
             
             uiBar.style.display = 'none';
@@ -349,17 +408,31 @@
             choreElement.textContent = chore.icon;
 
             const { width, height } = gameArea.getBoundingClientRect();
-            const x = Math.random() * (width - 60) + 20;
-            const y = Math.random() * (height - 80) + 20;
+            // 確保圖示不會超出邊界
+            const iconSize = 60;
+            const x = Math.random() * (width - iconSize);
+            const y = Math.random() * (height - iconSize);
             choreElement.style.left = `${x}px`;
             choreElement.style.top = `${y}px`;
 
-            choreElement.addEventListener('click', () => {
+            const clickHandler = () => {
+                // 播放點擊音效
+                if (soundsReady) {
+                    clickSound.triggerAttackRelease("C4", "8n", Tone.now());
+                }
                 score += chore.points;
                 scoreDisplay.textContent = score;
                 showFloatingText(`+${chore.points} ${chore.message}`, x, y);
                 choreElement.remove();
+            };
+
+            // 支援觸控和滑鼠點擊
+            choreElement.addEventListener('click', clickHandler, { once: true });
+            choreElement.addEventListener('touchstart', (e) => {
+                 e.preventDefault(); // 防止觸控時觸發滑鼠事件
+                 clickHandler();
             }, { once: true });
+
 
             gameArea.appendChild(choreElement);
 
@@ -397,6 +470,15 @@
         }
 
         function createBurst() {
+            if (soundsReady) {
+                const fireworkSound = new Tone.NoiseSynth({
+                    noise: { type: 'white' },
+                    envelope: { attack: 0.005, decay: 0.1, sustain: 0 }
+                }).toDestination();
+                fireworkSound.volume.value = -3; // 調高煙火音量
+                fireworkSound.triggerAttackRelease("0.1");
+            }
+
             const { width, height } = fireworksContainer.getBoundingClientRect();
             const x = Math.random() * width;
             const y = Math.random() * height * 0.8;
@@ -416,8 +498,11 @@
                 particle.style.top = `${y}px`;
                 particle.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
                 
-                particle.style.transform = `translate(${translateX}px, ${translateY}px) scale(1)`;
-
+                // 延遲應用 transform 以觸發動畫
+                requestAnimationFrame(() => {
+                    particle.style.transform = `translate(${translateX}px, ${translateY}px) scale(0)`;
+                });
+                
                 fireworksContainer.appendChild(particle);
 
                 setTimeout(() => {
