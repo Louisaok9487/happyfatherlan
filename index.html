@@ -264,10 +264,10 @@
         // --- 音效設定 (Tone.js) ---
         let soundsReady = false;
         const synth = new Tone.Synth().toDestination();
-        synth.volume.value = 0; // 調高音量
+        synth.volume.value = 0;
 
         const polySynth = new Tone.PolySynth(Tone.Synth).toDestination();
-        polySynth.volume.value = 0; // 調高音量 (原為 -6)
+        polySynth.volume.value = 0;
 
         const clickSound = new Tone.MembraneSynth({
             pitchDecay: 0.01,
@@ -275,18 +275,11 @@
             oscillator: { type: "sine" },
             envelope: { attack: 0.001, decay: 0.2, sustain: 0.01, release: 0.2 }
         }).toDestination();
-        clickSound.volume.value = 0; // 調高音量 (原為 -6)
+        clickSound.volume.value = 0;
 
-        // 勝利音效
-        const victoryMelody = [
-            ['C5', '8n'], ['E5', '8n'], ['G5', '8n'], ['C6', '4n'],
-            ['G5', '8n'], ['C6', '4n']
-        ];
-        
-        // 結束音效
+        const victoryMelody = [['C5', '8n'], ['E5', '8n'], ['G5', '8n'], ['C6', '4n'], ['G5', '8n'], ['C6', '4n']];
         const gameOverSound = [['C4', '4n'], ['G3', '4n']];
 
-        // 確保音效在使用者互動後啟動
         const initAudio = async () => {
             if (!soundsReady) {
                 await Tone.start();
@@ -297,8 +290,9 @@
 
         // --- 遊戲設定 ---
         const GAME_TIME = 20;
+        // 擴充到50種家務
         const chores = [
-            { icon: '🌳', points: 10, message: '修剪庭園！' },{ icon: '💧', points: 5, message: '澆花辛苦了！' },{ icon: '🌿', points: 12, message: '拔除雜草！' },{ icon: '🍂', points: 8, message: '掃落葉！' },{ icon: '🌱', points: 7, message: '施肥照顧植物！' },{ icon: '🧱', points: 15, message: '清理水溝！' },{ icon: '🚗', points: 10, message: '把車洗乾淨了！' },{ icon: '✨', points: 15, message: '汽車打蠟！' },{ icon: '🛠️', points: 8, message: '整理工具！' },{ icon: '📦', points: 10, message: '清理車庫！' },{ icon: '🖌️', points: 12, message: '戶外油漆！' },{ icon: '💡', points: 5, message: '換戶外燈泡！' },{ icon: '🍽️', points: 6, message: '洗碗達人！' },{ icon: '🪣', points: 9, message: '把地拖乾淨了！' },{ icon: '🗑️', points: 4, message: '倒垃圾！' },{ icon: '🪑', points: 10, message: '修理家具！' },{ icon: '🪟', points: 8, message: '擦窗戶！' },{ icon: '🍵', points: 7, message: '敬茶表誠心！' },{ icon: '🍳', points: 9, message: '張羅早餐！' },{ icon: '👨‍👩‍👧', points: 8, message: '開車接送！' },{ icon: '🛒', points: 10, message: '去市場買菜！' },{ icon: '🔩', points: 7, message: '去五金行！' },{ icon: '🧾', points: 5, message: '把帳單繳了！' },{ icon: '📮', points: 4, message: '寄信/收信！' },{ icon: '🏃‍♂️', points: 6, message: '外出跑腿！' },{ icon: '⛽', points: 5, message: '幫車子加油！' },{ icon: '🅿️', points: 10, message: '找到停車位了！' },{ icon: '🧺', points: 7, message: '曬衣服/收衣服！' },{ icon: '🐶', points: 6, message: '帶寵物散步！' },{ icon: '📞', points: 5, message: '聯絡事情！' }
+            { icon: '🌳', points: 10, message: '修剪庭園！' }, { icon: '💧', points: 5, message: '澆花辛苦了！' }, { icon: '🌿', points: 12, message: '拔除雜草！' }, { icon: '🍂', points: 8, message: '掃落葉！' }, { icon: '🌱', points: 7, message: '施肥照顧植物！' }, { icon: '🧱', points: 15, message: '清理水溝！' }, { icon: '🚗', points: 10, message: '把車洗乾淨了！' }, { icon: '✨', points: 15, message: '汽車打蠟！' }, { icon: '🛠️', points: 8, message: '整理工具！' }, { icon: '📦', points: 10, message: '清理車庫！' }, { icon: '🖌️', points: 12, message: '戶外油漆！' }, { icon: '💡', points: 5, message: '換戶外燈泡！' }, { icon: '🍽️', points: 6, message: '洗碗達人！' }, { icon: '🪣', points: 9, message: '把地拖乾淨了！' }, { icon: '🗑️', points: 4, message: '倒垃圾！' }, { icon: '🪑', points: 10, message: '修理家具！' }, { icon: '🪟', points: 8, message: '擦窗戶！' }, { icon: '🍵', points: 7, message: '敬茶表誠心！' }, { icon: '🍳', points: 9, message: '張羅早餐！' }, { icon: '👨‍👩‍👧', points: 8, message: '開車接送！' }, { icon: '🛒', points: 10, message: '去市場買菜！' }, { icon: '🔩', points: 7, message: '去五金行！' }, { icon: '🧾', points: 5, message: '把帳單繳了！' }, { icon: '📮', points: 4, message: '寄信/收信！' }, { icon: '🏃‍♂️', points: 6, message: '外出跑腿！' }, { icon: '⛽', points: 5, message: '幫車子加油！' }, { icon: '🅿️', points: 10, message: '找到停車位了！' }, { icon: '🧺', points: 7, message: '曬衣服/收衣服！' }, { icon: '🐶', points: 6, message: '帶寵物散步！' }, { icon: '📞', points: 5, message: '聯絡事情！' }, { icon: '🧹', points: 7, message: '掃地！' }, { icon: '🛋️', points: 11, message: '整理客廳！' }, { icon: '🛏️', points: 9, message: '整理床鋪！' }, { icon: '👕', points: 6, message: '摺衣服！' }, { icon: '🔌', points: 13, message: '修理電器！' }, { icon: '📚', points: 8, message: '整理書櫃！' }, { icon: '🖼️', points: 5, message: '掛好畫作！' }, { icon: '🍲', points: 14, message: '煮一頓大餐！' }, { icon: '🎂', points: 18, message: '準備生日驚喜！' }, { icon: '🚲', points: 9, message: '修理腳踏車！' }, { icon: '🍼', points: 20, message: '餵寶寶喝奶！' }, { icon: '🧸', points: 8, message: '收拾玩具！' }, { icon: '🎒', points: 7, message: '檢查聯絡簿！' }, { icon: '💰', points: 15, message: '努力賺錢！' }, { icon: '🦟', points: 6, message: '打蚊子！' }, { icon: '🔐', points: 5, message: '鎖好門窗！' }, { icon: '📰', points: 7, message: '關心時事！' }, { icon: '🥒', points: 6, message: '切菜備料！' }, { icon: '🤖', points: 12, message: '陪孩子玩！' }, { icon: '❤️', points: 25, message: '給家人一個擁抱！' }
         ];
 
         // --- 遊戲狀態 ---
@@ -306,21 +300,19 @@
         let timeLeft = GAME_TIME;
         let gameInterval = null;
         let timerInterval = null;
+        let availableChores = []; // 用於存放當前遊戲可用的、不重複的家務
 
         // --- 事件監聽 ---
         startButton.addEventListener('click', startGame);
         restartButton.addEventListener('click', startGame);
-        // 為了讓音效能在手機瀏覽器上正常播放，在第一次點擊時初始化音訊
         gameContainer.addEventListener('click', initAudio, { once: true });
-
 
         /**
          * 開始遊戲
          */
         function startGame() {
-            initAudio(); // 確保音訊已啟動
+            initAudio(); 
             
-            // 播放開始音效
             if (soundsReady) {
                 synth.triggerAttackRelease("C5", "8n", Tone.now());
             }
@@ -328,19 +320,17 @@
             // 重設遊戲狀態
             score = 0;
             timeLeft = GAME_TIME;
+            availableChores = [...chores]; // 複製一份完整的家務清單用於本局遊戲
             scoreDisplay.textContent = score;
             timerDisplay.textContent = timeLeft;
 
-            // 清理舊的遊戲元素
             gameArea.innerHTML = '';
             fireworksContainer.innerHTML = ''; 
 
-            // 切換畫面
             startScreen.classList.add('hidden');
             endScreen.classList.add('hidden');
             uiBar.style.display = 'flex';
 
-            // 啟動計時器
             timerInterval = setInterval(updateTimer, 1000);
             gameInterval = setInterval(spawnChore, 600);
             setTimeout(endGame, GAME_TIME * 1000);
@@ -353,7 +343,6 @@
             timeLeft--;
             timerDisplay.textContent = timeLeft;
             if (timeLeft <= 5 && timeLeft > 0 && soundsReady) {
-                // 倒數音效
                 synth.triggerAttackRelease("G5", "16n", Tone.now());
             }
             if (timeLeft <= 0) {
@@ -392,23 +381,29 @@
             uiBar.style.display = 'none';
             endScreen.classList.remove('hidden');
             
-            // 施放煙火
             launchFireworks();
         }
 
         /**
-         * 產生家務圖示
+         * 產生不重複的家務圖示
          */
         function spawnChore() {
             if (timeLeft <= 0) return;
 
-            const chore = chores[Math.floor(Math.random() * chores.length)];
+            // 如果可用家務已用完，則重新填滿 (雖然在20秒內幾乎不可能發生)
+            if (availableChores.length === 0) {
+                availableChores = [...chores];
+            }
+
+            const randomIndex = Math.floor(Math.random() * availableChores.length);
+            // 使用 splice 來選取並從陣列中移除該家務，確保不重複
+            const chore = availableChores.splice(randomIndex, 1)[0];
+            
             const choreElement = document.createElement('div');
             choreElement.classList.add('chore-item');
             choreElement.textContent = chore.icon;
 
             const { width, height } = gameArea.getBoundingClientRect();
-            // 確保圖示不會超出邊界
             const iconSize = 60;
             const x = Math.random() * (width - iconSize);
             const y = Math.random() * (height - iconSize);
@@ -416,7 +411,6 @@
             choreElement.style.top = `${y}px`;
 
             const clickHandler = () => {
-                // 播放點擊音效
                 if (soundsReady) {
                     clickSound.triggerAttackRelease("C4", "8n", Tone.now());
                 }
@@ -426,13 +420,11 @@
                 choreElement.remove();
             };
 
-            // 支援觸控和滑鼠點擊
             choreElement.addEventListener('click', clickHandler, { once: true });
             choreElement.addEventListener('touchstart', (e) => {
-                 e.preventDefault(); // 防止觸控時觸發滑鼠事件
+                 e.preventDefault();
                  clickHandler();
             }, { once: true });
-
 
             gameArea.appendChild(choreElement);
 
@@ -475,7 +467,7 @@
                     noise: { type: 'white' },
                     envelope: { attack: 0.005, decay: 0.1, sustain: 0 }
                 }).toDestination();
-                fireworkSound.volume.value = -3; // 調高煙火音量
+                fireworkSound.volume.value = -3;
                 fireworkSound.triggerAttackRelease("0.1");
             }
 
@@ -498,7 +490,6 @@
                 particle.style.top = `${y}px`;
                 particle.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
                 
-                // 延遲應用 transform 以觸發動畫
                 requestAnimationFrame(() => {
                     particle.style.transform = `translate(${translateX}px, ${translateY}px) scale(0)`;
                 });
