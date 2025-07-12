@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>超級老爸家務挑戰 (音效升級版)</title>
+    <title>超級老爸家務挑戰 (音效修復版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -49,6 +49,29 @@
             flex-direction: column;
             position: relative;
         }
+
+        /* --- 音效按鈕 --- */
+        #sound-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(0,0,0,0.1);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 12;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            transition: background-color 0.2s;
+        }
+        #sound-toggle:hover {
+            background-color: rgba(0,0,0,0.2);
+        }
+
 
         /* --- 遊戲畫面 (開始/結束) --- */
         .screen {
@@ -218,6 +241,8 @@
 <body>
 
     <div id="game-container">
+        <button id="sound-toggle">🔇</button>
+
         <!-- 開始畫面 -->
         <div id="start-screen" class="screen">
             <h1>超級老爸家務挑戰</h1>
@@ -260,67 +285,95 @@
         const timerDisplay = document.getElementById('timer');
         const endMessage = document.getElementById('end-message');
         const fireworksContainer = document.getElementById('fireworks-container');
+        const soundToggleButton = document.getElementById('sound-toggle');
 
         // --- 音效設定 (Tone.js) ---
-        let soundsReady = false;
-        const synth = new Tone.Synth().toDestination();
-        synth.volume.value = 0;
+        let audioInitialized = false;
+        let isMuted = true;
 
-        const polySynth = new Tone.PolySynth(Tone.Synth).toDestination();
-        polySynth.volume.value = 0;
-
+        // 建立音效合成器，但先不斷開音量
+        const synth = new Tone.Synth();
+        const polySynth = new Tone.PolySynth(Tone.Synth);
         const clickSound = new Tone.MembraneSynth({
             pitchDecay: 0.01,
             octaves: 6,
             oscillator: { type: "sine" },
             envelope: { attack: 0.001, decay: 0.2, sustain: 0.01, release: 0.2 }
-        }).toDestination();
-        clickSound.volume.value = 0;
-
-        const victoryMelody = [['C5', '8n'], ['E5', '8n'], ['G5', '8n'], ['C6', '4n'], ['G5', '8n'], ['C6', '4n']];
-        const gameOverSound = [['C4', '4n'], ['G3', '4n']];
-
-        const initAudio = async () => {
-            if (!soundsReady) {
+        });
+        
+        // 確保音效在使用者互動後啟動
+        async function initAudio() {
+            if (audioInitialized) return;
+            try {
                 await Tone.start();
+                // 將所有音效連接到主輸出
+                synth.toDestination();
+                polySynth.toDestination();
+                clickSound.toDestination();
+                audioInitialized = true;
                 console.log('音訊已準備就緒');
-                soundsReady = true;
+                // 首次初始化後，根據 isMuted 狀態設定音量
+                toggleMute(false); // 預設開啟音效
+            } catch (e) {
+                console.error("無法初始化音訊:", e);
             }
-        };
+        }
+
+        function toggleMute(manualToggle = true) {
+            if (!audioInitialized) {
+                 initAudio();
+                 return;
+            }
+            
+            if (manualToggle) {
+                isMuted = !isMuted;
+            } else {
+                isMuted = false; // 強制開啟
+            }
+
+            if (isMuted) {
+                Tone.Destination.mute = true;
+                soundToggleButton.textContent = '🔇';
+            } else {
+                Tone.Destination.mute = false;
+                soundToggleButton.textContent = '🔊';
+            }
+        }
+
 
         // --- 遊戲設定 ---
         const GAME_TIME = 20;
-        // 擴充到50種家務
         const chores = [
             { icon: '🌳', points: 10, message: '修剪庭園！' }, { icon: '💧', points: 5, message: '澆花辛苦了！' }, { icon: '🌿', points: 12, message: '拔除雜草！' }, { icon: '🍂', points: 8, message: '掃落葉！' }, { icon: '🌱', points: 7, message: '施肥照顧植物！' }, { icon: '🧱', points: 15, message: '清理水溝！' }, { icon: '🚗', points: 10, message: '把車洗乾淨了！' }, { icon: '✨', points: 15, message: '汽車打蠟！' }, { icon: '🛠️', points: 8, message: '整理工具！' }, { icon: '📦', points: 10, message: '清理車庫！' }, { icon: '🖌️', points: 12, message: '戶外油漆！' }, { icon: '💡', points: 5, message: '換戶外燈泡！' }, { icon: '🍽️', points: 6, message: '洗碗達人！' }, { icon: '🪣', points: 9, message: '把地拖乾淨了！' }, { icon: '🗑️', points: 4, message: '倒垃圾！' }, { icon: '🪑', points: 10, message: '修理家具！' }, { icon: '🪟', points: 8, message: '擦窗戶！' }, { icon: '🍵', points: 7, message: '敬茶表誠心！' }, { icon: '🍳', points: 9, message: '張羅早餐！' }, { icon: '👨‍👩‍👧', points: 8, message: '開車接送！' }, { icon: '🛒', points: 10, message: '去市場買菜！' }, { icon: '🔩', points: 7, message: '去五金行！' }, { icon: '🧾', points: 5, message: '把帳單繳了！' }, { icon: '📮', points: 4, message: '寄信/收信！' }, { icon: '🏃‍♂️', points: 6, message: '外出跑腿！' }, { icon: '⛽', points: 5, message: '幫車子加油！' }, { icon: '🅿️', points: 10, message: '找到停車位了！' }, { icon: '🧺', points: 7, message: '曬衣服/收衣服！' }, { icon: '🐶', points: 6, message: '帶寵物散步！' }, { icon: '📞', points: 5, message: '聯絡事情！' }, { icon: '🧹', points: 7, message: '掃地！' }, { icon: '🛋️', points: 11, message: '整理客廳！' }, { icon: '🛏️', points: 9, message: '整理床鋪！' }, { icon: '👕', points: 6, message: '摺衣服！' }, { icon: '🔌', points: 13, message: '修理電器！' }, { icon: '📚', points: 8, message: '整理書櫃！' }, { icon: '🖼️', points: 5, message: '掛好畫作！' }, { icon: '🍲', points: 14, message: '煮一頓大餐！' }, { icon: '🎂', points: 18, message: '準備生日驚喜！' }, { icon: '🚲', points: 9, message: '修理腳踏車！' }, { icon: '🍼', points: 20, message: '餵寶寶喝奶！' }, { icon: '🧸', points: 8, message: '收拾玩具！' }, { icon: '🎒', points: 7, message: '檢查聯絡簿！' }, { icon: '💰', points: 15, message: '努力賺錢！' }, { icon: '🦟', points: 6, message: '打蚊子！' }, { icon: '🔐', points: 5, message: '鎖好門窗！' }, { icon: '📰', points: 7, message: '關心時事！' }, { icon: '🥒', points: 6, message: '切菜備料！' }, { icon: '🤖', points: 12, message: '陪孩子玩！' }, { icon: '❤️', points: 25, message: '給家人一個擁抱！' }
         ];
+        const victoryMelody = [['C5', '8n'], ['E5', '8n'], ['G5', '8n'], ['C6', '4n'], ['G5', '8n'], ['C6', '4n']];
+        const gameOverSound = [['C4', '4n'], ['G3', '4n']];
 
         // --- 遊戲狀態 ---
         let score = 0;
         let timeLeft = GAME_TIME;
         let gameInterval = null;
         let timerInterval = null;
-        let availableChores = []; // 用於存放當前遊戲可用的、不重複的家務
+        let availableChores = [];
 
         // --- 事件監聽 ---
+        soundToggleButton.addEventListener('click', () => toggleMute(true));
         startButton.addEventListener('click', startGame);
         restartButton.addEventListener('click', startGame);
-        gameContainer.addEventListener('click', initAudio, { once: true });
 
         /**
          * 開始遊戲
          */
-        function startGame() {
-            initAudio(); 
+        async function startGame() {
+            await initAudio(); 
             
-            if (soundsReady) {
+            if (audioInitialized) {
                 synth.triggerAttackRelease("C5", "8n", Tone.now());
             }
 
-            // 重設遊戲狀態
             score = 0;
             timeLeft = GAME_TIME;
-            availableChores = [...chores]; // 複製一份完整的家務清單用於本局遊戲
+            availableChores = [...chores];
             scoreDisplay.textContent = score;
             timerDisplay.textContent = timeLeft;
 
@@ -330,6 +383,7 @@
             startScreen.classList.add('hidden');
             endScreen.classList.add('hidden');
             uiBar.style.display = 'flex';
+            soundToggleButton.style.display = 'none'; // 遊戲中隱藏音效按鈕
 
             timerInterval = setInterval(updateTimer, 1000);
             gameInterval = setInterval(spawnChore, 600);
@@ -342,7 +396,7 @@
         function updateTimer() {
             timeLeft--;
             timerDisplay.textContent = timeLeft;
-            if (timeLeft <= 5 && timeLeft > 0 && soundsReady) {
+            if (timeLeft <= 5 && timeLeft > 0 && audioInitialized) {
                 synth.triggerAttackRelease("G5", "16n", Tone.now());
             }
             if (timeLeft <= 0) {
@@ -361,25 +415,25 @@
             
             finalScoreDisplay.textContent = score;
             
+            let endMelody = gameOverSound;
             if (score > 100) {
                 endMessage.innerHTML = "太神啦！您是地表最強老爸！<br>這個分數，二伯連車尾燈都看不到！";
-                if (soundsReady) new Tone.Sequence((time, note) => {
-                    polySynth.triggerAttackRelease(note, "8n", time);
-                }, victoryMelody, "8n").start(0).stop('1m');
+                endMelody = victoryMelody;
             } else if (score > 50) {
                 endMessage.innerHTML = "爸爸辛苦了！您是我們家的超級英雄！<br>比二伯強太多了！";
-                 if (soundsReady) new Tone.Sequence((time, note) => {
-                    polySynth.triggerAttackRelease(note, "4n", time);
-                }, gameOverSound, "4n").start(0).stop('1m');
             } else {
                 endMessage.innerHTML = "感謝爸爸的付出！<br>每一分都是愛的證明！";
-                 if (soundsReady) new Tone.Sequence((time, note) => {
-                    polySynth.triggerAttackRelease(note, "4n", time);
-                }, gameOverSound, "4n").start(0).stop('1m');
+            }
+
+            if (audioInitialized) {
+                 new Tone.Sequence((time, note) => {
+                    polySynth.triggerAttackRelease(note, "8n", time);
+                }, endMelody, "8n").start(0).stop('1m');
             }
             
             uiBar.style.display = 'none';
             endScreen.classList.remove('hidden');
+            soundToggleButton.style.display = 'flex'; // 遊戲結束後顯示音效按鈕
             
             launchFireworks();
         }
@@ -388,15 +442,9 @@
          * 產生不重複的家務圖示
          */
         function spawnChore() {
-            if (timeLeft <= 0) return;
-
-            // 如果可用家務已用完，則重新填滿 (雖然在20秒內幾乎不可能發生)
-            if (availableChores.length === 0) {
-                availableChores = [...chores];
-            }
+            if (timeLeft <= 0 || availableChores.length === 0) return;
 
             const randomIndex = Math.floor(Math.random() * availableChores.length);
-            // 使用 splice 來選取並從陣列中移除該家務，確保不重複
             const chore = availableChores.splice(randomIndex, 1)[0];
             
             const choreElement = document.createElement('div');
@@ -411,7 +459,7 @@
             choreElement.style.top = `${y}px`;
 
             const clickHandler = () => {
-                if (soundsReady) {
+                if (audioInitialized) {
                     clickSound.triggerAttackRelease("C4", "8n", Tone.now());
                 }
                 score += chore.points;
@@ -429,9 +477,7 @@
             gameArea.appendChild(choreElement);
 
             setTimeout(() => {
-                if (choreElement) {
-                    choreElement.remove();
-                }
+                choreElement.remove();
             }, 2500);
         }
 
@@ -462,12 +508,11 @@
         }
 
         function createBurst() {
-            if (soundsReady) {
+            if (audioInitialized) {
                 const fireworkSound = new Tone.NoiseSynth({
                     noise: { type: 'white' },
                     envelope: { attack: 0.005, decay: 0.1, sustain: 0 }
                 }).toDestination();
-                fireworkSound.volume.value = -3;
                 fireworkSound.triggerAttackRelease("0.1");
             }
 
